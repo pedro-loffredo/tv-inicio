@@ -1,10 +1,11 @@
 {
   "name": "tv-inicio",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Tela inicial limpa, estilo Apple TV, para Samsung Tizen via TizenBrew",
   "packageType": "app",
   "appName": "Início",
   "appPath": "launcher/index.html",
+  "serviceFile": "service.js",
   "keys": [],
   "license": "MIT"
 }

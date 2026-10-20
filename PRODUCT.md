@@ -19,7 +19,7 @@ A casa, no sofá, à noite na maior parte do tempo, a uns 3 metros de uma tela d
 - Tem que funcionar sem rede no boot: fonte local, clima entra quando a rede chega.
 
 ## Próxima versão (pedido do Pedro, 19/10/2026)
-- O "fumê" (sombra) do app em foco aparece **na frente** dos vizinhos ao passar por Prime, Netflix e YouTube. Deve ficar **atrás**. Causa provável: `.tile.on` sobe com `z-index: 2` e leva a sombra grande (`0 30px 60px` + brilho da marca) por cima dos cartões ao lado. Conserto: sombra num pseudo-elemento atrás do cartão, ou sombra menor.
+- ~~Fumê na frente dos vizinhos~~: resolvido na 0.2.0 (sombra curta, só embaixo do cartão).
 - Limpar os dois módulos "Unknown Module" no TizenBrew (`gh/pedro-loffr` e `npm/pedro-loffredo/tv-inicio`), com o Pedro olhando a TV.
 
 ## Como publicar uma versão

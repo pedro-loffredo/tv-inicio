@@ -6,10 +6,12 @@
 <title>Neno's House</title>
 <style>
   /* Tizen 6 = Chromium ~76: sem gap em flex (84), sem inset (87), sem aspect-ratio (88), sem ?.
-     mask-image só com prefixo -webkit-. A TV satura cor: luz de fundo fica escura de propósito. */
+     mask-image só com -webkit-. A TV satura cor: luzes de fundo ficam escuras de propósito.
+     Vidro: desenhado com gradiente e reflexo (funciona em qualquer motor); o desfoque real
+     (backdrop-filter) entra só nas peças paradas, para não pesar no processador. */
   @font-face { font-family: Outfit; src: url(Outfit.ttf) format("truetype"); font-weight: 100 900; font-display: swap; }
 
-  :root { --ink: #f2eee8; --dim: rgba(242,238,232,.6); --faint: rgba(242,238,232,.34); --night: #050506; --card: #121215; }
+  :root { --ink: #f4f1ec; --dim: rgba(244,241,236,.66); --faint: rgba(244,241,236,.4); --night: #06070b; }
   html, body { margin: 0; height: 100%; overflow: hidden; background: var(--night); color: var(--ink);
     font-family: Outfit, sans-serif; cursor: none; -webkit-font-smoothing: antialiased; }
   ::selection { background: transparent; }
@@ -18,58 +20,84 @@
     transform-origin: 0 0; animation: lights 1400ms cubic-bezier(.16,1,.3,1) both; }
   @keyframes lights { from { opacity: 0; } to { opacity: 1; } }
 
-  /* luz baixa atrás da fileira, na cor do app em foco; duas camadas trocam por opacidade */
+  /* o que o vidro refrata: três luzes paradas e uma na cor do app em foco */
+  #sky { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px;
+    background:
+      radial-gradient(ellipse 38% 46% at 86% 8%,  rgba(64,52,150,.55) 0%, rgba(6,7,11,0) 100%),
+      radial-gradient(ellipse 42% 40% at 6% 96%,  rgba(14,92,104,.45) 0%, rgba(6,7,11,0) 100%),
+      radial-gradient(ellipse 30% 30% at 58% 62%, rgba(120,60,30,.22) 0%, rgba(6,7,11,0) 100%),
+      var(--night); }
   .beam { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; opacity: 0;
     transition: opacity 1100ms cubic-bezier(.16,1,.3,1); }
-  .beam.on { opacity: .55; } /* na TV (19/10) a luz cheia virou azul na tela inteira */
-  #grain { position: absolute; left: 0; top: 0; width: 100%; height: 100%; opacity: .05; pointer-events: none;
+  .beam.on { opacity: .6; }
+  #grain { position: absolute; left: 0; top: 0; width: 100%; height: 100%; opacity: .045; pointer-events: none;
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"); }
 
+  /* receita de vidro: corpo translúcido, borda acesa no alto e apagada embaixo, brilho interno */
+  .glass { position: relative;
+    background: linear-gradient(160deg, rgba(255,255,255,.17) 0%, rgba(255,255,255,.06) 38%, rgba(255,255,255,.03) 62%, rgba(255,255,255,.09) 100%);
+    box-shadow: inset 0 1.5px 0 rgba(255,255,255,.42), inset 1.5px 0 0 rgba(255,255,255,.14),
+                inset 0 -1px 0 rgba(255,255,255,.08), inset 0 0 0 1px rgba(255,255,255,.07),
+                inset 0 0 40px rgba(255,255,255,.04); }
+  .glass::before { content: ""; position: absolute; left: 0; right: 0; top: 0; height: 55%; border-radius: inherit;
+    background: linear-gradient(180deg, rgba(255,255,255,.11), rgba(255,255,255,.03) 60%, rgba(255,255,255,0)); pointer-events: none; }
+  @supports ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+    .frost { -webkit-backdrop-filter: blur(30px) saturate(170%); backdrop-filter: blur(30px) saturate(170%); }
+  }
+
   /* topo */
-  #top { position: absolute; left: 140px; right: 140px; top: 88px; display: flex; justify-content: space-between; align-items: flex-start; }
+  #top { position: absolute; left: 140px; right: 140px; top: 84px; display: flex; justify-content: space-between; align-items: flex-start; }
   #hello { font-size: 36px; font-weight: 300; color: var(--dim); }
   #hello b { font-weight: 500; color: var(--ink); }
   #time { font-size: 168px; font-weight: 200; line-height: .9; letter-spacing: -.035em; margin-top: 20px;
-    font-variant-numeric: tabular-nums; }
+    font-variant-numeric: tabular-nums; text-shadow: 0 2px 30px rgba(0,0,0,.35); }
   #date { font-size: 32px; font-weight: 300; color: var(--dim); margin-top: 24px; }
 
-  #weather { text-align: right; opacity: 0; transition: opacity 900ms ease; }
+  #weather { padding: 26px 40px 28px 34px; border-radius: 40px; text-align: right; opacity: 0; transition: opacity 900ms ease; }
   #weather.ready { opacity: 1; }
   #wx-now { display: flex; align-items: center; justify-content: flex-end; }
-  #wx-icon { width: 76px; height: 76px; margin-right: 24px; }
+  #wx-icon { width: 70px; height: 70px; margin-right: 22px; }
   #wx-icon * { fill: none; stroke: var(--ink); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
-  #wx-temp { font-size: 104px; font-weight: 200; line-height: 1; letter-spacing: -.035em; font-variant-numeric: tabular-nums; }
-  #wx-desc { font-size: 30px; font-weight: 300; margin-top: 16px; color: var(--dim); }
-  #wx-range { font-size: 26px; color: var(--faint); margin-top: 8px; font-variant-numeric: tabular-nums; }
-  #wx-range span { margin-left: 22px; }
+  #wx-temp { font-size: 96px; font-weight: 200; line-height: 1; letter-spacing: -.035em; font-variant-numeric: tabular-nums; }
+  #wx-desc { font-size: 28px; font-weight: 300; margin-top: 12px; color: var(--dim); }
+  #wx-range { font-size: 24px; color: var(--faint); margin-top: 6px; font-variant-numeric: tabular-nums; }
+  #wx-range span { margin-left: 20px; }
 
   /* app em foco */
-  #focus { position: absolute; left: 144px; top: 440px; }
-  #name { font-size: 84px; font-weight: 300; letter-spacing: -.025em; line-height: 1;
-    transition: opacity 260ms ease; }
+  #focus { position: absolute; left: 144px; top: 420px; }
+  #name { font-size: 84px; font-weight: 300; letter-spacing: -.025em; line-height: 1; text-shadow: 0 2px 30px rgba(0,0,0,.35); }
   #tag { font-size: 30px; font-weight: 300; color: var(--dim); margin-top: 14px; }
 
-  /* fileiras */
+  /* prateleira de vidro da fileira principal */
+  #shelf { position: absolute; left: 112px; top: 572px; width: 1532px; height: 316px; border-radius: 56px; }
   #dock { position: absolute; left: 144px; top: 610px; display: flex; }
-  #more { position: absolute; left: 144px; top: 900px; display: flex; }
+  #more { position: absolute; left: 144px; top: 912px; display: flex; }
 
-  .tile { position: relative; flex: 0 0 auto; width: 460px; height: 240px; margin-right: 40px; border-radius: 34px;
-    background: var(--card);
-    box-shadow: inset 0 1px 0 rgba(255,255,255,.07), inset 0 0 0 1px rgba(255,255,255,.05), 0 14px 30px rgba(0,0,0,.5);
-    transition: transform 380ms cubic-bezier(.34,1.45,.64,1), box-shadow 380ms ease, opacity 300ms ease, background-color 300ms ease; }
-  .tile .logo { position: absolute; left: 20%; right: 20%; top: 21%; bottom: 21%;
+  .tile { flex: 0 0 auto; width: 460px; height: 240px; margin-right: 40px; border-radius: 36px; overflow: hidden;
+    transition: transform 420ms cubic-bezier(.34,1.4,.64,1), opacity 300ms ease; }
+  .tile .logo { position: absolute; left: 20%; right: 20%; top: 21%; bottom: 21%; z-index: 1;
     -webkit-mask-repeat: no-repeat; -webkit-mask-position: center; -webkit-mask-size: contain; }
-  #more .tile { width: 300px; height: 150px; border-radius: 26px; margin-right: 32px; }
-  .row-off .tile { opacity: .42; }
-  .tile.on { opacity: 1; background-color: #1b1b20; transform: translateY(-12px) scale(1.08); z-index: 2; }
+  /* reflexo que atravessa o vidro quando o app ganha foco */
+  .tile .sheen { position: absolute; left: -60%; top: 0; width: 40%; height: 100%; z-index: 2; opacity: 0;
+    background: linear-gradient(100deg, rgba(255,255,255,0), rgba(255,255,255,.22), rgba(255,255,255,0));
+    transform: skewX(-18deg); }
+  .tile.on .sheen { animation: sheen 900ms cubic-bezier(.16,1,.3,1) 80ms both; }
+  @keyframes sheen { from { opacity: 1; transform: translateX(0) skewX(-18deg); } to { opacity: 0; transform: translateX(420%) skewX(-18deg); } }
+  #more .tile { width: 300px; height: 150px; border-radius: 28px; margin-right: 32px; }
+  .row-off .tile { opacity: .5; }
+  /* foco: a borda acende e a sombra fica embaixo do cartão, sem invadir os vizinhos */
+  .tile.on { opacity: 1; transform: translateY(-14px) scale(1.08);
+    box-shadow: inset 0 0 0 3px rgba(255,255,255,.92), inset 0 2px 0 3px rgba(255,255,255,.5),
+                inset 0 0 50px rgba(255,255,255,.1), 0 26px 30px -16px rgba(0,0,0,.75); }
 
-  #toast { position: absolute; left: 50%; bottom: 36px; transform: translateX(-50%); padding: 14px 30px;
-    border-radius: 999px; background: rgba(24,24,28,.92); color: var(--ink); font-size: 26px; opacity: 0; transition: opacity 300ms; }
+  #toast { position: absolute; left: 50%; bottom: 36px; transform: translateX(-50%); padding: 16px 32px;
+    border-radius: 999px; color: var(--ink); font-size: 26px; opacity: 0; transition: opacity 300ms; }
   @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
 </style>
 </head>
 <body>
 <div id="stage">
+  <div id="sky"></div>
   <div class="beam" id="beamA"></div><div class="beam" id="beamB"></div>
   <div id="grain"></div>
 
@@ -79,7 +107,7 @@
       <div id="time"></div>
       <div id="date"></div>
     </div>
-    <div id="weather">
+    <div id="weather" class="glass frost">
       <div id="wx-now"><svg id="wx-icon" viewBox="0 0 48 48"></svg><div id="wx-temp"></div></div>
       <div id="wx-desc"></div>
       <div id="wx-range"></div>
@@ -87,9 +115,10 @@
   </div>
 
   <div id="focus"><div id="name"></div><div id="tag"></div></div>
+  <div id="shelf" class="glass frost"></div>
   <div id="dock"></div>
   <div id="more"></div>
-  <div id="toast"></div>
+  <div id="toast" class="glass frost"></div>
 </div>
 <script>
 // ---------- apps: ordem do Pedro (19/10/2026), ids medidos na TV UN50AU7700 ----------
@@ -100,24 +129,26 @@ var DOCK = [
   { id: '111299001912',  name: 'YouTube',     tag: 'Vídeos',                           logo: 'youtube',    color: '#ff0033', light: '#2e0309' }
 ];
 var MORE = [
-  { id: '3201901017640', name: 'Disney+',  tag: 'Disney, Pixar, Marvel e Star Wars', logo: 'disneyplus', color: '#f2eee8', light: '#071640' },
+  { id: '3201901017640', name: 'Disney+',  tag: 'Disney, Pixar, Marvel e Star Wars', logo: 'disneyplus', color: '#f4f1ec', light: '#071640' },
   { id: '3201606009684', name: 'Spotify',  tag: 'Música e podcasts',                 logo: 'spotify',    color: '#1ed760', light: '#04260f' },
-  { id: '3201807016597', name: 'Apple TV', tag: 'Apple TV+',                         logo: 'appletv',    color: '#f2eee8', light: '#1c1c22' }
+  { id: '3201807016597', name: 'Apple TV', tag: 'Apple TV+',                         logo: 'appletv',    color: '#f4f1ec', light: '#1c1c22' }
 ];
 var rows = [DOCK, MORE], row = 0, col = 0;
+// dentro do TizenBrew a página não recebe `tizen`; quem abre os apps é o service.js na porta 8095
 var hasTizen = typeof tizen !== 'undefined' && !!tizen.application;
+var SERVICE = 'http://127.0.0.1:8095';
 var $ = function (id) { return document.getElementById(id); };
 
 function fit() { $('stage').style.transform = 'scale(' + Math.min(innerWidth / 1920, innerHeight / 1080) + ')'; }
 fit(); addEventListener('resize', fit);
 
 function makeTile(app) {
-  var el = document.createElement('div'), logo = document.createElement('div');
-  el.className = 'tile'; logo.className = 'logo';
+  var el = document.createElement('div'), logo = document.createElement('div'), sheen = document.createElement('div');
+  el.className = 'tile glass'; logo.className = 'logo'; sheen.className = 'sheen';
   logo.style.backgroundColor = app.color;
   logo.style.webkitMaskImage = 'url(logos/' + app.logo + '.svg)';
   if (app.big) { logo.style.left = logo.style.right = '6%'; logo.style.top = logo.style.bottom = '6%'; } // o glifo do Prime é miúdo no viewBox
-  el.appendChild(logo);
+  el.appendChild(logo); el.appendChild(sheen);
   return (app.el = el);
 }
 DOCK.forEach(function (a) { $('dock').appendChild(makeTile(a)); });
@@ -126,28 +157,34 @@ MORE.forEach(function (a) { $('more').appendChild(makeTile(a)); });
 // ---------- foco ----------
 var beamFlip = false;
 function paint() {
-  rows.forEach(function (r) { r.forEach(function (a) { a.el.classList.remove('on'); a.el.style.boxShadow = ''; }); });
+  rows.forEach(function (r) { r.forEach(function (a) { a.el.classList.remove('on'); }); });
   var app = rows[row][col];
+  void app.el.offsetWidth; // reinicia o reflexo a cada foco
   app.el.classList.add('on');
-  app.el.style.boxShadow = '0 0 0 4px rgba(242,238,232,.95), 0 30px 60px rgba(0,0,0,.7), 0 18px 70px ' + app.color + '33';
   $('dock').className = row ? 'row-off' : '';
   $('more').className = row ? '' : 'row-off';
   $('name').textContent = app.name;
   $('tag').textContent = app.tag;
   beamFlip = !beamFlip;
   var next = beamFlip ? $('beamA') : $('beamB'), prev = beamFlip ? $('beamB') : $('beamA');
-  next.style.background = 'radial-gradient(ellipse 70% 55% at 32% 78%, ' + app.light + ' 0%, rgba(5,5,6,0) 100%)';
+  next.style.background = 'radial-gradient(ellipse 60% 50% at 30% 80%, ' + app.light + ' 0%, rgba(6,7,11,0) 100%)';
   next.className = 'beam on'; prev.className = 'beam';
 }
 
 function toast(msg) {
   var t = $('toast'); t.textContent = msg; t.style.opacity = 1;
-  clearTimeout(toast.t); toast.t = setTimeout(function () { t.style.opacity = 0; }, 2600);
+  clearTimeout(toast.t); toast.t = setTimeout(function () { t.style.opacity = 0; }, 3200);
 }
 
 function launch(app) {
-  if (!hasTizen) return toast('Abriria ' + app.name);
-  tizen.application.launch(app.id, null, function (e) { toast('Não consegui abrir ' + app.name + '. ' + e.message); });
+  if (hasTizen) {
+    return tizen.application.launch(app.id, null, function (e) { toast('Não consegui abrir ' + app.name + '. ' + e.message); });
+  }
+  var x = new XMLHttpRequest();
+  x.open('GET', SERVICE + '/launch?id=' + app.id); x.timeout = 6000;
+  x.onload = function () { if (x.status !== 200) toast('Não consegui abrir ' + app.name + '. ' + x.responseText); };
+  x.onerror = x.ontimeout = function () { toast('Ainda carregando o atalho dos apps. Tente de novo em alguns segundos.'); };
+  x.send();
 }
 
 document.addEventListener('keydown', function (e) {
@@ -208,7 +245,7 @@ function showWeather(w) {
   $('wx-desc').textContent = s[1] + ' em Araraquara';
   $('wx-range').innerHTML = 'máx ' + w.max + '°<span>mín ' + w.min + '°</span>' +
     (w.rain >= 30 ? '<span>chuva ' + w.rain + '%</span>' : '');
-  $('weather').className = 'ready';
+  $('weather').className = 'glass frost ready';
 }
 function loadWeather() {
   var x = new XMLHttpRequest();
