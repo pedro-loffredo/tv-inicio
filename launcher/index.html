@@ -3,132 +3,245 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=1920">
-<title>Início</title>
+<title>Neno's House</title>
 <style>
-  /* fonte local: a TV liga antes do Wi-Fi às vezes, e o início não pode depender de rede */
+  /* Tizen 6 = Chromium ~76: sem gap em flex (84), sem inset (87), sem aspect-ratio (88), sem ?. */
   @font-face { font-family: Outfit; src: url(Outfit.ttf) format("truetype"); font-weight: 100 900; font-display: swap; }
-  @keyframes rise { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: none; } }
-  header, #title, #dock { animation: rise 700ms cubic-bezier(.2,.8,.2,1) both; }
-  #title { animation-delay: 120ms; } #dock { animation-delay: 220ms; }
-  @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
-  /* Tizen 6 = Chromium ~76: nada de :has, optional chaining ou container queries */
-  html, body { margin: 0; height: 100%; overflow: hidden; background: #000; color: #fff;
-    font-family: Outfit, "Samsung One", sans-serif; }
-  /* palco fixo 1920x1080, escalado para a janela real (TV pode reportar 1280x720) */
-  #stage { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; overflow: hidden; transform-origin: 0 0; }
-  #glow { position: absolute; left: 0; top: 0; right: 0; bottom: 0; transition: background 600ms ease; }
-  header { position: absolute; left: 140px; top: 70px; }
-  .hello { font-size: 26px; letter-spacing: 6px; text-transform: uppercase; opacity: .55; }
-  .clock { display: flex; align-items: baseline; gap: 40px; margin-top: 6px; }
-  .time { font-size: 150px; font-weight: 200; line-height: 1; }
-  .date { font-size: 32px; letter-spacing: 5px; text-transform: uppercase; opacity: .6;
-    padding-left: 40px; border-left: 2px solid rgba(255,255,255,.2); }
-  #title { position: absolute; left: 150px; top: 430px; font-size: 96px; font-weight: 300; }
-  #dock { position: absolute; left: 120px; right: 120px; top: 590px; height: 270px; display: flex; gap: 40px;
-    align-items: center; padding: 0 30px; border-radius: 48px;
-    background: rgba(30,30,34,.72); border: 2px solid rgba(255,255,255,.08); }
-  #grid { position: absolute; left: 150px; right: 150px; top: 895px; display: flex; gap: 40px;
-    transition: top 400ms ease; }
 
-  body.down #dock { opacity: .35; }
-  .tile { flex: 0 0 auto; width: 380px; height: 214px; border-radius: 32px; display: flex; align-items: center;
-    justify-content: center; font-size: 48px; font-weight: 600; letter-spacing: -1px;
-    transition: transform 220ms cubic-bezier(.2,.9,.3,1.3), box-shadow 220ms ease; }
-  .tile img { max-width: 55%; max-height: 60%; }
-  .tile.on { transform: scale(1.12); box-shadow: 0 0 0 5px rgba(255,255,255,.9), 0 30px 60px rgba(0,0,0,.6); }
-  #grid .tile { width: 270px; height: 150px; font-size: 34px; }
-  #toast { position: absolute; left: 50%; bottom: 40px; transform: translateX(-50%); padding: 14px 28px;
-    border-radius: 999px; background: rgba(255,255,255,.12); font-size: 26px; opacity: 0; transition: opacity 300ms; }
+  :root { --ink: #f4efe8; --dim: rgba(244,239,232,.62); --faint: rgba(244,239,232,.38); --night: #07070a; }
+  html, body { margin: 0; height: 100%; overflow: hidden; background: var(--night); color: var(--ink);
+    font-family: Outfit, sans-serif; cursor: none; -webkit-font-smoothing: antialiased; }
+  ::selection { background: transparent; }
+
+  #stage { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; overflow: hidden;
+    transform-origin: 0 0; animation: lights 1200ms cubic-bezier(.16,1,.3,1) both; }
+  @keyframes lights { from { opacity: 0; } to { opacity: 1; } }
+
+  /* luz de projetor: duas camadas que trocam por opacidade, o processador só compõe */
+  .beam { position: absolute; left: -200px; top: -300px; width: 2320px; height: 1680px; opacity: 0;
+    transition: opacity 900ms cubic-bezier(.16,1,.3,1); }
+  .beam.on { opacity: 1; }
+  #grain { position: absolute; left: 0; top: 0; width: 100%; height: 100%; opacity: .07; pointer-events: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"); }
+  #vignette { position: absolute; left: 0; top: 0; width: 100%; height: 100%;
+    background: radial-gradient(ellipse 120% 90% at 50% 40%, transparent 55%, rgba(0,0,0,.7) 100%); }
+
+  /* topo: casa e hora à esquerda, clima à direita */
+  #top { position: absolute; left: 132px; right: 132px; top: 84px; display: flex; justify-content: space-between; align-items: flex-start; }
+  #hello { font-size: 40px; font-weight: 300; color: var(--dim); }
+  #hello b { font-weight: 500; color: var(--ink); }
+  #time { font-size: 176px; font-weight: 200; line-height: .9; letter-spacing: -.03em; margin-top: 18px;
+    font-variant-numeric: tabular-nums; }
+  #date { font-size: 34px; font-weight: 300; color: var(--dim); margin-top: 22px; }
+
+  #weather { text-align: right; opacity: 0; transition: opacity 800ms ease; }
+  #weather.ready { opacity: 1; }
+  #wx-now { display: flex; align-items: center; justify-content: flex-end; }
+  #wx-icon { width: 92px; height: 92px; margin-right: 22px; }
+  #wx-icon * { fill: none; stroke: var(--ink); stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+  #wx-temp { font-size: 112px; font-weight: 200; line-height: 1; letter-spacing: -.03em; font-variant-numeric: tabular-nums; }
+  #wx-desc { font-size: 34px; font-weight: 300; margin-top: 14px; }
+  #wx-range { font-size: 28px; color: var(--dim); margin-top: 8px; font-variant-numeric: tabular-nums; }
+  #wx-range span { margin-left: 22px; }
+
+  /* app em foco */
+  #focus { position: absolute; left: 150px; top: 418px; }
+  #name { font-size: 92px; font-weight: 400; letter-spacing: -.02em; line-height: 1; }
+  #tag { font-size: 32px; font-weight: 300; color: var(--dim); margin-top: 16px; }
+
+  /* faixa principal */
+  #dock { position: absolute; left: 112px; top: 596px; padding: 30px 34px; border-radius: 52px; display: flex;
+    background: linear-gradient(180deg, rgba(255,255,255,.07), rgba(255,255,255,.025));
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.08), 0 30px 80px rgba(0,0,0,.45); }
+  #more { position: absolute; left: 150px; top: 900px; display: flex; align-items: center; }
+  #more-label { font-size: 26px; color: var(--faint); margin-right: 34px; }
+
+  .tile { position: relative; flex: 0 0 auto; width: 340px; height: 190px; margin-right: 32px; border-radius: 30px;
+    display: flex; align-items: center; justify-content: center; overflow: hidden;
+    font-size: 46px; font-weight: 600; letter-spacing: -.02em;
+    box-shadow: 0 10px 24px rgba(0,0,0,.35);
+    transition: transform 360ms cubic-bezier(.34,1.56,.64,1), box-shadow 360ms ease, opacity 300ms ease; }
+  .tile:last-child { margin-right: 0; }
+  .tile img { width: 100%; height: 100%; object-fit: contain; }
+  .tile::after { content: ""; position: absolute; left: 0; top: 0; right: 0; bottom: 0; border-radius: 30px;
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,.1); }
+  #more .tile { width: 214px; height: 120px; border-radius: 22px; font-size: 30px; margin-right: 26px; }
+  #more .tile::after { border-radius: 22px; }
+  .row-off .tile { opacity: .5; }
+  .tile.on { opacity: 1; transform: translateY(-10px) scale(1.1); z-index: 2;
+    box-shadow: 0 0 0 5px var(--ink), 0 28px 60px rgba(0,0,0,.7); }
+
+  #toast { position: absolute; left: 50%; bottom: 36px; transform: translateX(-50%); padding: 14px 30px;
+    border-radius: 999px; background: rgba(20,20,24,.9); color: var(--ink); font-size: 26px; opacity: 0; transition: opacity 300ms; }
+  @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
 </style>
 </head>
 <body>
 <div id="stage">
-<div id="glow"></div>
-<header>
-  <div class="hello" id="hello"></div>
-  <div class="clock"><div class="time" id="time"></div><div class="date" id="date"></div></div>
-</header>
-<div id="title"></div>
-<div id="dock"></div>
-<div id="grid"></div>
-<div id="toast"></div>
+  <div class="beam" id="beamA"></div><div class="beam" id="beamB"></div>
+  <div id="vignette"></div><div id="grain"></div>
+
+  <div id="top">
+    <div>
+      <div id="hello"><b>Neno's House</b>, <span id="period"></span>!</div>
+      <div id="time"></div>
+      <div id="date"></div>
+    </div>
+    <div id="weather">
+      <div id="wx-now"><svg id="wx-icon" viewBox="0 0 48 48"></svg><div id="wx-temp"></div></div>
+      <div id="wx-desc"></div>
+      <div id="wx-range"></div>
+    </div>
+  </div>
+
+  <div id="focus"><div id="name"></div><div id="tag"></div></div>
+  <div id="dock"></div>
+  <div id="more"><div id="more-label">Mais</div></div>
+  <div id="toast"></div>
 </div>
 <script>
-function fit() {
-  var s = Math.min(innerWidth / 1920, innerHeight / 1080);
-  document.getElementById('stage').style.transform = 'scale(' + s + ')';
-}
+// ---------- apps (ids medidos na TV UN50AU7700 em 19/10/2026) ----------
+var DOCK = [
+  { id: '3201907018807', name: 'Netflix',     tag: 'Séries e filmes',                    bg: '#000',    fg: '#e50914', light: '#9b0a12' },
+  { id: '3201910019365', name: 'Prime Video', tag: 'Filmes, séries e canais como HBO',   bg: '#00a8e1', fg: '#fff',    light: '#006a94' },
+  { id: '3201901017640', name: 'Disney+',     tag: 'Disney, Pixar, Marvel e Star Wars',  bg: '#0b1b52', fg: '#fff',    light: '#1c3fa8' },
+  { id: '111299001912',  name: 'YouTube',     tag: 'Vídeos',                              bg: '#fff',    fg: '#ff0000', light: '#8f0d0d' }
+];
+var MORE = [
+  { id: '3201601007230', name: 'HBO Max',  tag: 'Séries e filmes HBO', bg: '#14082e', fg: '#fff', light: '#4a22a8' },
+  { id: '3201807016597', name: 'Apple TV', tag: 'Apple TV+',           bg: '#111',    fg: '#fff', light: '#4a4a52' },
+  { id: '3201606009684', name: 'Spotify',  tag: 'Música e podcasts',   bg: '#1db954', fg: '#000', light: '#0e7a35' }
+];
+var rows = [DOCK, MORE], row = 0, col = 0;
+var hasTizen = typeof tizen !== 'undefined' && !!tizen.application;
+var $ = function (id) { return document.getElementById(id); };
+
+function fit() { $('stage').style.transform = 'scale(' + Math.min(innerWidth / 1920, innerHeight / 1080) + ')'; }
 fit(); addEventListener('resize', fit);
 
-// IDs medidos na TV (UN50AU7700) em 19/10/2026 via /api/v2/applications/<id>
-var DOCK = [
-  { id: '3201907018807', name: 'Netflix',     bg: '#000',    fg: '#e50914', glow: '#7a0008' },
-  { id: '3201910019365', name: 'Prime Video', bg: '#00a8e1', fg: '#fff',    glow: '#004a66' },
-  { id: '3201901017640', name: 'Disney+',     bg: '#0a1a4a', fg: '#fff',    glow: '#0d2a7a' },
-  { id: '111299001912',  name: 'YouTube',     bg: '#fff',    fg: '#ff0000', glow: '#6b0000' }
-];
-var GRID = [
-  { id: '3201601007230', name: 'HBO Max',  bg: '#1a0b3d', fg: '#fff', glow: '#3a1a8a' },
-  { id: '3201807016597', name: 'Apple TV', bg: '#111',    fg: '#fff', glow: '#333' },
-  { id: '3201606009684', name: 'Spotify',  bg: '#1db954', fg: '#000', glow: '#0b5a28' }
-];
-var rows = [DOCK, GRID], row = 0, col = 0;
-var tizenOk = typeof tizen !== 'undefined' && tizen.application;
-
-function tileFor(app) {
+function makeTile(app) {
   var el = document.createElement('div');
   el.className = 'tile';
   el.style.background = app.bg; el.style.color = app.fg;
+  el.textContent = app.name;
   var icon = null;
-  if (tizenOk) { try { icon = tizen.application.getAppInfo(app.id).iconPath; } catch (e) {} }
-  if (icon) { var img = new Image(); img.src = icon; img.onerror = function () { el.textContent = app.name; }; el.appendChild(img); }
-  else el.textContent = app.name;
-  app.el = el;
-  return el;
+  if (hasTizen) { try { icon = tizen.application.getAppInfo(app.id).iconPath; } catch (e) {} }
+  if (icon) {
+    var img = new Image();
+    img.onload = function () { el.textContent = ''; el.appendChild(img); };
+    img.src = icon;
+  }
+  return (app.el = el);
 }
-DOCK.forEach(function (a) { document.getElementById('dock').appendChild(tileFor(a)); });
-GRID.forEach(function (a) { document.getElementById('grid').appendChild(tileFor(a)); });
+DOCK.forEach(function (a) { $('dock').appendChild(makeTile(a)); });
+MORE.forEach(function (a) { $('more').appendChild(makeTile(a)); });
 
+// ---------- foco ----------
+var beamFlip = false;
 function paint() {
   rows.forEach(function (r) { r.forEach(function (a) { a.el.classList.remove('on'); }); });
   var app = rows[row][col];
   app.el.classList.add('on');
-  document.body.className = row ? 'down' : '';
-  document.getElementById('title').textContent = app.name;
-  document.getElementById('glow').style.background =
-    'radial-gradient(ellipse at 30% 45%, ' + app.glow + ' 0%, #000 70%)';
+  $('dock').className = row ? 'row-off' : '';
+  $('more').className = row ? '' : 'row-off';
+  $('name').textContent = app.name;
+  $('tag').textContent = app.tag;
+  beamFlip = !beamFlip;
+  var next = beamFlip ? $('beamA') : $('beamB'), prev = beamFlip ? $('beamB') : $('beamA');
+  next.style.background = 'radial-gradient(ellipse 50% 46% at 30% 52%, ' + app.light + ' 0%, rgba(7,7,10,0) 100%)';
+  next.className = 'beam on'; prev.className = 'beam';
 }
 
 function toast(msg) {
-  var t = document.getElementById('toast'); t.textContent = msg; t.style.opacity = 1;
-  setTimeout(function () { t.style.opacity = 0; }, 2500);
+  var t = $('toast'); t.textContent = msg; t.style.opacity = 1;
+  clearTimeout(toast.t); toast.t = setTimeout(function () { t.style.opacity = 0; }, 2600);
 }
 
 function launch(app) {
-  if (!tizenOk) return toast('Abriria ' + app.name + ' (fora da TV)');
-  tizen.application.launch(app.id, null, function (e) { toast('Não abriu ' + app.name + ': ' + e.message); });
+  if (!hasTizen) return toast('Abriria ' + app.name);
+  tizen.application.launch(app.id, null, function (e) { toast('Não consegui abrir ' + app.name + '. ' + e.message); });
 }
 
 document.addEventListener('keydown', function (e) {
   var k = e.keyCode;
   if (k === 37) col = Math.max(0, col - 1);
   else if (k === 39) col = Math.min(rows[row].length - 1, col + 1);
-  else if (k === 40 && row === 0) { row = 1; col = Math.min(col, GRID.length - 1); }
-  else if ((k === 38 || k === 10009) && row === 1) row = 0;
-  else if (k === 13) return launch(rows[row][col]);
+  else if (k === 40 && row === 0) { row = 1; col = Math.min(col, MORE.length - 1); }
+  else if (k === 38 && row === 1) { row = 0; col = Math.min(col, DOCK.length - 1); }
+  else if (k === 13) { launch(rows[row][col]); return; }
+  else if (k === 10009) { e.preventDefault(); if (row === 1) { row = 0; col = 0; paint(); } return; }
   else return;
   e.preventDefault();
   paint();
 });
 
+// ---------- hora (sem Intl: o Tizen pode vir sem locale pt-BR) ----------
+var DIAS = ['domingo', 'segunda-feira', 'terça-feira', 'quarta-feira', 'quinta-feira', 'sexta-feira', 'sábado'];
+var MESES = ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'];
+function two(n) { return (n < 10 ? '0' : '') + n; }
 function tick() {
   var d = new Date(), h = d.getHours();
-  document.getElementById('hello').textContent = h < 12 ? 'Bom dia' : h < 18 ? 'Boa tarde' : 'Boa noite';
-  document.getElementById('time').textContent = ('0' + h).slice(-2) + ':' + ('0' + d.getMinutes()).slice(-2);
-  document.getElementById('date').textContent =
-    d.toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' }).replace(',', '');
+  $('period').textContent = h >= 5 && h < 12 ? 'bom dia' : h >= 12 && h < 18 ? 'boa tarde' : 'boa noite';
+  $('time').textContent = two(h) + ':' + two(d.getMinutes());
+  $('date').textContent = DIAS[d.getDay()] + ', ' + d.getDate() + ' de ' + MESES[d.getMonth()];
 }
-tick(); setInterval(tick, 10000); paint();
+
+// ---------- clima de Araraquara (Open-Meteo, sem chave) ----------
+var WX_URL = 'https://api.open-meteo.com/v1/forecast?latitude=-21.7946&longitude=-48.1756' +
+  '&current=temperature_2m,weather_code,is_day&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max' +
+  '&timezone=America%2FSao_Paulo&forecast_days=1';
+
+// ícones desenhados num traço só, viewBox 48
+var ICON = {
+  sun:   '<circle cx="24" cy="24" r="8"/><path d="M24 6v5M24 37v5M6 24h5M37 24h5M11.3 11.3l3.5 3.5M33.2 33.2l3.5 3.5M11.3 36.7l3.5-3.5M33.2 14.8l3.5-3.5"/>',
+  moon:  '<path d="M33 30.5A13 13 0 0 1 19.5 13a13 13 0 1 0 13.5 17.5z"/>',
+  part:  '<path d="M17 13v-3M8.5 16.5l-2-2M26 16.5l2-2M5 25H2"/><path d="M11.2 24a7 7 0 0 1 12.6-4.5"/><path d="M16 38h18a7 7 0 0 0 .6-14 9 9 0 0 0-17.3 2.6A5.7 5.7 0 0 0 16 38z"/>',
+  cloud: '<path d="M14 36h21a8 8 0 0 0 .7-16A11 11 0 0 0 14.5 23 6.5 6.5 0 0 0 14 36z"/>',
+  fog:   '<path d="M14 26h21a8 8 0 0 0 .7-16A11 11 0 0 0 14.5 13 6.5 6.5 0 0 0 14 26z"/><path d="M10 33h28M14 39h20"/>',
+  rain:  '<path d="M14 30h21a8 8 0 0 0 .7-16A11 11 0 0 0 14.5 17 6.5 6.5 0 0 0 14 30z"/><path d="M17 35l-2 5M25 35l-2 5M33 35l-2 5"/>',
+  storm: '<path d="M14 30h21a8 8 0 0 0 .7-16A11 11 0 0 0 14.5 17 6.5 6.5 0 0 0 14 30z"/><path d="M25 32l-4 6h6l-4 6"/>'
+};
+// códigos WMO: https://open-meteo.com/en/docs
+function sky(code, day) {
+  if (code === 0) return [day ? 'sun' : 'moon', day ? 'Céu limpo' : 'Noite limpa'];
+  if (code <= 2) return [day ? 'part' : 'moon', 'Poucas nuvens'];
+  if (code === 3) return ['cloud', 'Nublado'];
+  if (code <= 48) return ['fog', 'Neblina'];
+  if (code <= 57) return ['rain', 'Garoa'];
+  if (code <= 67 || (code >= 80 && code <= 82)) return ['rain', 'Chuva'];
+  if (code <= 86) return ['cloud', 'Tempo fechado'];
+  return ['storm', 'Tempestade'];
+}
+function showWeather(w) {
+  var s = sky(w.code, w.day);
+  $('wx-icon').innerHTML = ICON[s[0]];
+  $('wx-temp').textContent = w.temp + '°';
+  $('wx-desc').textContent = s[1] + ' em Araraquara';
+  $('wx-range').innerHTML = 'máx ' + w.max + '°<span>mín ' + w.min + '°</span>' +
+    (w.rain >= 30 ? '<span>chuva ' + w.rain + '%</span>' : '');
+  $('weather').className = 'ready';
+}
+function loadWeather() {
+  var x = new XMLHttpRequest();
+  x.open('GET', WX_URL); x.timeout = 8000;
+  x.onload = function () {
+    try {
+      var j = JSON.parse(x.responseText);
+      var w = { code: j.current.weather_code, day: j.current.is_day === 1, temp: Math.round(j.current.temperature_2m),
+        max: Math.round(j.daily.temperature_2m_max[0]), min: Math.round(j.daily.temperature_2m_min[0]),
+        rain: j.daily.precipitation_probability_max[0] || 0 };
+      showWeather(w);
+      try { localStorage.setItem('wx', JSON.stringify(w)); } catch (e) {}
+    } catch (e) {}
+  };
+  x.send();
+}
+// clima da última vez aparece na hora; o novo substitui quando a rede responde
+try { var cached = JSON.parse(localStorage.getItem('wx')); if (cached) showWeather(cached); } catch (e) {}
+
+tick(); setInterval(tick, 5000);
+loadWeather(); setInterval(loadWeather, 15 * 60 * 1000);
+paint();
 </script>
 </body>
 </html>
