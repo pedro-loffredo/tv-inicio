@@ -23,7 +23,10 @@ A casa, no sofá, à noite na maior parte do tempo, a uns 3 metros de uma tela d
 - Limpar os dois módulos "Unknown Module" no TizenBrew (`gh/pedro-loffr` e `npm/pedro-loffredo/tv-inicio`), com o Pedro olhando a TV.
 
 ## Como publicar uma versão
-1. Editar `launcher/index.html`, conferir em `http://localhost:8765/launcher/index.html` (servidor: `uv run python -m http.server 8765` na raiz).
+1. Editar `launcher/home.html`, conferir em `http://localhost:8765/launcher/home.html` (servidor: `uv run python -m http.server 8765` na raiz).
 2. Pedro roda `git add launcher && git commit -m "..." && git push origin main` (o push é dele).
-3. Limpar o cache: `https://purge.jsdelivr.net/gh/pedro-loffredo/tv-inicio/launcher/index.html`.
+3. Limpar o cache: `https://purge.jsdelivr.net/gh/pedro-loffredo/tv-inicio/launcher/home.html`.
 4. Reabrir o TizenBrew na TV: `DELETE` e depois `POST` em `http://192.168.15.10:8001/api/v2/applications/xvvl3S1bvH.TizenBrewStandalone`.
+
+## Pegadinha do cache (medido em 19/10/2026)
+O jsDelivr guarda o arquivo da tela pelo caminho sem versão (`x-jsd-version: HEAD`) e, às vezes, o purge não derruba a cópia velha por horas. `?v=` na URL não adianta, o CDN ignora. Saída usada: **arquivo da tela com nome novo** + `appPath` novo no `package.json` (o manifesto atualizou com purge nas duas vezes). Se travar de novo, renomear `launcher/home.html`.
