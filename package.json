@@ -4,7 +4,7 @@
   "description": "Tela inicial limpa, estilo Apple TV, para Samsung Tizen via TizenBrew",
   "packageType": "app",
   "appName": "Início",
-  "appPath": "index.html",
+  "appPath": "launcher/index.html",
   "keys": [],
   "license": "MIT"
 }
