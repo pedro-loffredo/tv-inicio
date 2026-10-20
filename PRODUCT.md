@@ -17,3 +17,13 @@ A casa, no sofá, à noite na maior parte do tempo, a uns 3 metros de uma tela d
 - Processador fraco: nada de blur pesado animado, nada de vídeo de fundo, poucas camadas compostas.
 - Abre apps por `tizen.application.launch(id)`; os ids foram medidos na TV.
 - Tem que funcionar sem rede no boot: fonte local, clima entra quando a rede chega.
+
+## Próxima versão (pedido do Pedro, 19/10/2026)
+- O "fumê" (sombra) do app em foco aparece **na frente** dos vizinhos ao passar por Prime, Netflix e YouTube. Deve ficar **atrás**. Causa provável: `.tile.on` sobe com `z-index: 2` e leva a sombra grande (`0 30px 60px` + brilho da marca) por cima dos cartões ao lado. Conserto: sombra num pseudo-elemento atrás do cartão, ou sombra menor.
+- Limpar os dois módulos "Unknown Module" no TizenBrew (`gh/pedro-loffr` e `npm/pedro-loffredo/tv-inicio`), com o Pedro olhando a TV.
+
+## Como publicar uma versão
+1. Editar `launcher/index.html`, conferir em `http://localhost:8765/launcher/index.html` (servidor: `uv run python -m http.server 8765` na raiz).
+2. Pedro roda `git add launcher && git commit -m "..." && git push origin main` (o push é dele).
+3. Limpar o cache: `https://purge.jsdelivr.net/gh/pedro-loffredo/tv-inicio/launcher/index.html`.
+4. Reabrir o TizenBrew na TV: `DELETE` e depois `POST` em `http://192.168.15.10:8001/api/v2/applications/xvvl3S1bvH.TizenBrewStandalone`.
